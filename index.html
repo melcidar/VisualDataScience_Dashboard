@@ -147,7 +147,7 @@ function renderMap(year) {
         }
       },
 
-      /* attach education data */
+      /* attach ALL education rows */
       {
         "lookup": "region",
         "from": {
@@ -157,11 +157,11 @@ function renderMap(year) {
         }
       },
 
-      /* filter year & level */
+      /* filters */
       { "filter": `datum.year == ${year}` },
       { "filter": `datum.level == '${selectedLevel}'` },
 
-      /* aggregate by region */
+      /* aggregate per region */
       {
         "aggregate": [
           { "op": "mean", "field": "gender_gap", "as": "gender_gap" }
@@ -194,6 +194,7 @@ function renderMap(year) {
 
   vegaEmbed("#map", spec, { actions: false });
 }
+
 
 /* ================= INTERACTION ================= */
 
