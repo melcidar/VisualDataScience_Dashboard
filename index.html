@@ -83,45 +83,46 @@ const spec = {
     }
   ],
 
-  "marks": [
-    {
-      "type": "shape",
-      "from": { "data": "world" },
-      "transform": [
-        {
-          "type": "formula",
-          "expr": "replace(datum.properties.name, 'United States of America', 'United States')",
-          "as": "country"
-        },
-        {
-          "type": "lookup",
-          "from": "wb_regions",
-          "key": "country",
-          "fields": ["country"],
-          "values": ["region"]
-        },
-        {
-          "type": "lookup",
-          "from": "education",
-          "key": "region",
-          "fields": ["region"],
-          "values": ["gender_gap"]
-        }
-      ],
-      "encode": {
-        "enter": {
-          "fill": { "scale": "color", "field": "gender_gap" },
-          "stroke": { "value": "white" },
-          "strokeWidth": { "value": 0.5 }
-        },
-        "update": {
-          "tooltip": {
-            "signal": "{'Country': datum.country, 'Region': datum.region, 'Gender gap': datum.gender_gap}"
-          }
+"marks": [
+  {
+    "type": "geoshape",
+    "from": { "data": "world" },
+    "projection": "proj",
+    "transform": [
+      {
+        "type": "formula",
+        "expr": "replace(datum.properties.name, 'United States of America', 'United States')",
+        "as": "country"
+      },
+      {
+        "type": "lookup",
+        "from": "wb_regions",
+        "key": "country",
+        "fields": ["country"],
+        "values": ["region"]
+      },
+      {
+        "type": "lookup",
+        "from": "education",
+        "key": "region",
+        "fields": ["region"],
+        "values": ["gender_gap"]
+      }
+    ],
+    "encode": {
+      "enter": {
+        "fill": { "scale": "color", "field": "gender_gap" },
+        "stroke": { "value": "white" },
+        "strokeWidth": { "value": 0.5 }
+      },
+      "update": {
+        "tooltip": {
+          "signal": "{'Country': datum.country, 'Region': datum.region, 'Gender gap': datum.gender_gap}"
         }
       }
     }
-  ]
+  }
+]
 };
 
 vegaEmbed("#vis", spec, { actions: false });
