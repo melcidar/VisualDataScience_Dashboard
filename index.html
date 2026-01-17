@@ -44,17 +44,18 @@ const spec = {
       "url": "https://vega.github.io/vega-datasets/data/world-110m.json",
       "format": { "type": "topojson", "feature": "countries" }
     },
-
     {
       "name": "wb_regions",
       "url": "country_to_wb_region_array.json"
     },
-
     {
       "name": "education",
       "url": "data.json",
       "transform": [
-        { "type": "filter", "expr": "datum.year == year && datum.level == level" },
+        {
+          "type": "filter",
+          "expr": "datum.year == year && datum.level == level"
+        },
         {
           "type": "aggregate",
           "groupby": ["region"],
@@ -77,46 +78,51 @@ const spec = {
     {
       "name": "color",
       "type": "linear",
-      "domain": { "data": "education", "field": "gender_gap" },
+      "domain": [-0.5, 0.5],
       "range": { "scheme": "redblue" },
       "reverse": true,
       "clamp": true
     }
   ],
 
-"marks": [
-  {
-    "type": "geoshape",
-    "from": { "data": "world" },
-    "projection": "proj",
-    "transform": [
-      {
-        "type": "lookup",
-        "from": "wb_regions",
-        "key": "id",
-        "fields": ["id"],
-        "values": ["region"]
-      },
-      {
-        "type": "lookup",
-        "from": "education",
-        "key": "region",
-        "fields": ["region"],
-        "values": ["gender_gap"]
-      }
-    ],
-    "encode": {
-      "enter": {
-        "fill": [
-          { "test": "isValid(datum.gender_gap)", "scale": "color", "field": "gender_gap" },
-          { "value": "#dddddd" }
-        ],
-        "stroke": { "value": "white" },
-        "strokeWidth": { "value": 0.5 }
+  "marks": [
+    {
+      "type": "geoshape",
+      "from": { "data": "world" },
+      "projection": "proj",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "wb_regions",
+          "key": "id",
+          "fields": ["id"],
+          "values": ["region"]
+        },
+        {
+          "type": "lookup",
+          "from": "education",
+          "key": "region",
+          "fields": ["region"],
+          "values": ["gender_gap"]
+        }
+      ],
+      "encode": {
+        "enter": {
+          "fill": [
+            { "test": "isValid(datum.gender_gap)", "scale": "color", "field": "gender_gap" },
+            { "value": "#dddddd" }
+          ],
+          "stroke": { "value": "white" },
+          "strokeWidth": { "value": 0.5 }
+        },
+        "update": {
+          "tooltip": {
+            "signal": "{'Region': datum.region || 'N/A', 'Gender gap': datum.gender_gap || 'N/A'}"
+          }
+        }
       }
     }
-  }
-]
+  ]
 };
 
 vegaEmbed("#vis", spec, { actions: false });
