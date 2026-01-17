@@ -1,13 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hello World Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Gender Gaps in Education per World Bank Regions</title>
+
+  <!-- Vega libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    #chart {
+      max-width: 900px;
+      margin: auto;
+    }
+  </style>
 </head>
+
 <body>
 
-    <h1>Hello, World!</h1>
-    <p>This is my first dashboard page.</p>
+  <h1>Gender Gaps in Education per World Bank Regions</h1>
+
+  <div class="controls">
+    <label for="year">Year:</label>
+    <input type="range" id="year" min="1999" max="2020" value="2020">
+    <span id="yearValue">2020</span>
+  </div>
+
+  <div id="chart"></div>
+
+  <script>
+    const yearSlider = document.getElementById("year");
+    const yearValue = document.getElementById("yearValue");
+
+    function renderChart(year) {
+      const spec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "url": "data.json" },
+        "transform": [
+          { "filter": `datum.year == ${year}` },
+          { "filter": "datum.level == 'primary'" }
+        ],
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "region",
+            "type": "nominal",
+            "title": "World Bank Region",
+            "axis": { "labelAngle": -40 }
+          },
+          "y": {
+            "field": "gender_gap",
+            "type": "quantitative",
+            "title": "Gender gap (female − male)"
+          },
+          "color": {
+            "field": "region",
+            "type": "nominal",
+            "legend": null
+          }
+        }
+      };
+
+      vegaEmbed("#chart", spec, { actions: false });
+    }
+
+    yearSlider.addEventListener("input", () => {
+      yearValue.textContent = yearSlider.value;
+      renderChart(yearSlider.value);
+    });
+
+    // initial render
+    renderChart(2020);
+  </script>
 
 </body>
 </html>
