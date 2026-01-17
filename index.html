@@ -106,24 +106,13 @@ const spec = {
       }
     ],
     "encode": {
-  "enter": {
-    "fill": [
-      { "test": "isValid(datum.gender_gap)", "scale": "color", "field": "gender_gap" },
-      { "value": "#e0e0e0" }
-    ],
-    "stroke": { "value": "white" },
-    "strokeWidth": { "value": 0.5 }
-  },
-  "update": {
-    "tooltip": {
-      "signal": "{'Region': datum.region || 'N/A', 'Gender gap': datum.gender_gap || 'N/A'}"
-    }
-  }
-},
-      "update": {
-        "tooltip": {
-          "signal": "{'Region': datum.region, 'Gender gap': datum.gender_gap}"
-        }
+      "enter": {
+        "fill": [
+          { "test": "isValid(datum.gender_gap)", "scale": "color", "field": "gender_gap" },
+          { "value": "#dddddd" }
+        ],
+        "stroke": { "value": "white" },
+        "strokeWidth": { "value": 0.5 }
       }
     }
   }
