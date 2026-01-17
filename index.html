@@ -122,42 +122,6 @@ function renderChart(year) {
 
 function renderMap(year) {
 
-  const transforms = [
-    /* fix common country naming mismatch */
-    {
-      "calculate": "replace(datum.properties.name, 'United States of America', 'United States')",
-      "as": "country_fixed"
-    },
-
-    /* country -> WB region */
-    {
-      "lookup": "country_fixed",
-      "from": {
-        "data": { "url": "country_to_wb_region.json" },
-        "key": "key",
-        "fields": ["value"]
-      },
-      "as": ["region"]
-    },
-
-    /* region -> gender gap (by year + level) */
-    {
-      "lookup": "region",
-      "from": {
-        "data": { "url": "data.json" },
-        "key": "region",
-        "fields": ["gender_gap", "year", "level"]
-      }
-    },
-
-    { "filter": `datum.year == ${year}` },
-    { "filter": `datum.level == '${selectedLevel}'` }
-  ];
-
-  if (selectedRegion !== null) {
-    transforms.push({ "filter": `datum.region == '${selectedRegion}'` });
-  }
-
   const spec = {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
 
@@ -169,7 +133,47 @@ function renderMap(year) {
       }
     },
 
-    "transform": transforms,
+    "transform": [
+      /* normalize country name */
+      {
+        "calculate": "replace(datum.properties.name, 'United States of America', 'United States')",
+        "as": "country_fixed"
+      },
+
+      /* country -> WB region */
+      {
+        "lookup": "country_fixed",
+        "from": {
+          "data": { "url": "country_to_wb_region.json" },
+          "key": "key",
+          "fields": ["value"]
+        },
+        "as": ["region"]
+      },
+
+      /* region -> aggregated gender gap */
+      {
+        "lookup": "region",
+        "from": {
+          "data": {
+            "url": "data.json",
+            "transform": [
+              { "filter": `datum.year == ${year}` },
+              { "filter": `datum.level == '${selectedLevel}'` },
+              ...(selectedRegion ? [{ "filter": `datum.region == '${selectedRegion}'` }] : []),
+              {
+                "aggregate": [
+                  { "op": "mean", "field": "gender_gap", "as": "gender_gap" }
+                ],
+                "groupby": ["region"]
+              }
+            ]
+          },
+          "key": "region",
+          "fields": ["gender_gap"]
+        }
+      }
+    ],
 
     "projection": { "type": "equalEarth" },
 
