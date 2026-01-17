@@ -38,6 +38,13 @@
     <span id="yearValue">2020</span>
   </div>
 
+  <div class="controls">
+  <button onclick="setLevel('primary')">Primary</button>
+  <button onclick="setLevel('lower_secondary')">Lower Secondary</button>
+  <button onclick="setLevel('upper_secondary')">Upper Secondary</button>
+  <button onclick="setLevel('tertiary')">Tertiary</button></div>
+
+
   <div id="chart"></div>
 
   <script>
@@ -50,7 +57,7 @@
         "data": { "url": "data.json" },
         "transform": [
           { "filter": `datum.year == ${year}` },
-          { "filter": "datum.level == 'primary'" }
+          { "filter": `datum.level == '${selectedLevel}'` }
         ],
         "mark": "bar",
         "encoding": {
@@ -80,6 +87,12 @@
       yearValue.textContent = yearSlider.value;
       renderChart(yearSlider.value);
     });
+
+    let selectedLevel = "primary";
+    function setLevel(level) {
+    selectedLevel = level;
+    renderChart(yearSlider.value);
+    }
 
     // initial render
     renderChart(2020);
