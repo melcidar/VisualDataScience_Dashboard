@@ -20,8 +20,11 @@ Promise.all([
   countryRegionMap = cMap;
 
   initControls();
+
   updateDashboard();
 });
+
+
 
 const REGION_LABELS = {
   "East Asia and Pacific (WB)": "EAP",
@@ -43,6 +46,19 @@ const REGION_COLORS = {
   "Sub-Saharan Africa (WB)": "#F0E442" // yellow
 };
 
+const MAP_COLORSCALE = [
+  [0, "#67001f"],
+  [0.5, "#f7f7f7"],
+  [1, "#053061"]
+];
+
+const MAP_MIN = -10;
+const MAP_MAX = 10;
+
+function valueToColor(value) {
+  const t = (value - MAP_MIN) / (MAP_MAX - MAP_MIN); // normalize 0–1
+  return Plotly.colorscale.getColor("RdBu", t);
+}
 
 
 // --------------------------------------------------
@@ -229,24 +245,39 @@ function drawBarCharts() {
     const regionLabels = regions.map(r => REGION_LABELS[r] ?? r);
     const values = data.map(d => d.gender_gap);
 
-    const colors = regions.map(r => {
-      if (selectedRegion) {
-        return r === selectedRegion
-          ? "#aa1bd6"   // selected region
-          : "#d3d3d3";  // others faded
-      }
-      return REGION_COLORS[r] || "#2f6df6"; // default distinct color
-    });
+    // ---------- marker logic ----------
+    let marker;
+
+    if (selectedRegion) {
+      // Selected → value-based RdBu (map-consistent)
+      marker = {
+        color: values,
+        colorscale: "RdBu",
+        cmin: -10,
+        cmax: 10,
+        showscale: false,
+        opacity: regions.map(r =>
+          r === selectedRegion ? 1 : 0.25
+        )
+      };
+    } else {
+      // No selection → original categorical colors
+      marker = {
+        color: regions.map(r =>
+          REGION_COLORS[r] || "#2f6df6"
+        )
+      };
+    }
 
     const trace = {
       type: "bar",
-      x: regionLabels,          // 👈 short labels for display
+      x: regionLabels,
       y: values,
-      marker: { color: colors },
-      customdata: regions, 
-      hovertemplate: "<b>%{customdata}</b><br>Gender gap: %{y}<extra></extra>"
+      customdata: regions,
+      marker: marker,
+      hovertemplate:
+        "<b>%{customdata}</b><br>Gender gap: %{y}<extra></extra>"
     };
-
 
     const layout = {
       title: level,
@@ -262,20 +293,20 @@ function drawBarCharts() {
       }
     };
 
-    Plotly.newPlot(div, [trace], layout, { displayModeBar: false });
+    Plotly.newPlot(div, [trace], layout, {
+      displayModeBar: false,
+      responsive: true
+    });
 
     div.on("plotly_click", e => {
       if (!e.points || !e.points.length) return;
 
-      selectedRegion = e.points[0].customdata; // full region name
+      selectedRegion = e.points[0].customdata;
       drawBarCharts();
       drawLineChart();
     });
-
   });
-
 }
-
 
 function drawLineChart() {
   const container = document.getElementById("lineChart");
@@ -285,7 +316,6 @@ function drawLineChart() {
   );
 
   const regions = [...new Set(data.map(d => d.region))];
-  const years = [...new Set(data.map(d => d.year))].sort((a, b) => a - b);
 
   const traces = regions.map(region => {
     const regionData = data
@@ -299,20 +329,19 @@ function drawLineChart() {
       mode: "lines+markers",
       name: REGION_LABELS[region] ?? region,
       customdata: region,
+
       x: regionData.map(d => d.year),
       y: regionData.map(d => d.gender_gap),
+
       line: {
-        width: isSelected ? 4 : 2,
-        color: isSelected
-          ? "#aa1bd6"                     // selected region (red)
-          : selectedRegion
-          ? "#ccc"                        // others faded
-          : REGION_COLORS[region] || "#2f6df6" // default distinct color
+        color: REGION_COLORS[region] || "#2f6df6",
+        width: isSelected ? 4 : 2
       },
 
       marker: {
         size: isSelected ? 7 : 5
       },
+
       opacity: selectedRegion && !isSelected ? 0.3 : 1
     };
   });
@@ -325,7 +354,7 @@ function drawLineChart() {
     },
     yaxis: {
       title: "Gender gap",
-      range: [-10, 10],
+      range: [-20, 35],
       zeroline: true
     },
     showlegend: true,
@@ -337,15 +366,14 @@ function drawLineChart() {
 
   Plotly.newPlot(container, traces, layout, {
     displayModeBar: false,
-    responsive: true
+    responsive: false
   });
 
   container.on("plotly_click", e => {
-  if (!e.points || !e.points.length) return;
+    if (!e.points || !e.points.length) return;
 
-  selectedRegion = e.points[0].customdata;
-  drawBarCharts();
-  drawLineChart();
-});
-
+    selectedRegion = e.points[0].customdata;
+    drawBarCharts();
+    drawLineChart();
+  });
 }
