@@ -23,6 +23,26 @@ Promise.all([
   updateDashboard();
 });
 
+const REGION_LABELS = {
+  "East Asia and Pacific (WB)": "EAP",
+  "Europe and Central Asia (WB)": "ECA",
+  "Latin America and Caribbean (WB)": "LAC",
+  "Middle East and North Africa (WB)": "MENA",
+  "North America (WB)": "NA",
+  "South Asia (WB)": "SA",
+  "Sub-Saharan Africa (WB)": "SSA"
+};
+
+const REGION_COLORS = {
+  "East Asia and Pacific (WB)": "#1f77b4",
+  "Europe and Central Asia (WB)": "#ff7f0e",
+  "Latin America and Caribbean (WB)": "#2ca02c",
+  "Middle East and North Africa (WB)": "#9467bd",
+  "North America (WB)": "#8c564b",
+  "South Asia (WB)": "#e377c2",
+  "Sub-Saharan Africa (WB)": "#17becf"
+};
+
 
 // --------------------------------------------------
 // CONTROLS
@@ -46,23 +66,7 @@ function initControls() {
     yearValue.textContent = selectedYear;
     updateDashboard();
   };
-
-  function initRegionButtons() {
-  const regions = [...new Set(genderData.map(d => d.region))];
-  const container = document.getElementById("regionButtons");
-  container.innerHTML = "";
-
-  regions.forEach(r => {
-    const btn = document.createElement("button");
-    btn.textContent = r;
-    btn.onclick = () => {
-      selectedRegion = r;
-      updateActiveButtons(container, btn);
-      drawBarCharts();
-    };
-    container.appendChild(btn);
-  });
-}
+  
 
 function initLevelButtons() {
   const levels = [...new Set(genderData.map(d => d.level))];
@@ -91,7 +95,6 @@ function updateActiveButtons(container, activeBtn) {
   activeBtn.classList.add("active");
 }
 
-  initRegionButtons();
   initLevelButtons();
 }
 
@@ -108,7 +111,7 @@ function updateDashboard() {
 
   drawMap(filtered);
   drawBarCharts();
-
+  drawLineChart();
 }
 
 // --------------------------------------------------
@@ -153,7 +156,7 @@ function drawMap(filteredData) {
       orientation: "h",
       x: 0.5,
       xanchor: "center",
-      y: -0.15,
+      y: -0.25,
       len: 0.6,
       thickness: 12
     },
@@ -162,11 +165,16 @@ function drawMap(filteredData) {
 
 
 const layout = {
+  margin: {
+    t: 0,
+    b: 0,
+    l: 0,
+    r: 0
+  },
   geo: {
-    projection: { type: "natural earth" }
+    projection: { type: "equirectangular" }
   }
 };
-
 
   Plotly.newPlot("map", [trace], layout);
 
@@ -175,6 +183,7 @@ const layout = {
     const region = countryRegionMap.find(d => d.country === country)?.region;
     selectedRegion = region;
     drawBarCharts();
+    drawLineChart();
   });
 }
 
@@ -192,7 +201,7 @@ function drawBarCharts() {
 
   levels.forEach(level => {
     const div = document.createElement("div");
-    div.style.height = "300px";
+    div.style.height = "350px";
     container.appendChild(div);
 
     const data = genderData.filter(d =>
@@ -201,32 +210,126 @@ function drawBarCharts() {
     );
 
     const regions = data.map(d => d.region);
+    const regionLabels = regions.map(r => REGION_LABELS[r] ?? r);
     const values = data.map(d => d.gender_gap);
 
     const colors = regions.map(r => {
-      if (!selectedRegion) return "#2f6df6";
-      if (r === selectedRegion) return "#d62728"; // highlight
-      return "#d3d3d3"; // greyed out
+      if (selectedRegion) {
+        return r === selectedRegion
+          ? "#d62728"   // selected region
+          : "#d3d3d3";  // others faded
+      }
+      return REGION_COLORS[r] || "#2f6df6"; // default distinct color
     });
 
     const trace = {
       type: "bar",
-      x: values,
-      y: regions,
-      orientation: "h",
-      marker: { color: colors }
+      x: regionLabels,          // 👈 short labels for display
+      y: values,
+      marker: { color: colors },
+      customdata: regions, 
+      hovertemplate: "<b>%{customdata}</b><br>Gender gap: %{y}<extra></extra>"
     };
+
 
     const layout = {
       title: level,
-      margin: { l: 160, r: 20, t: 40, b: 40 },
+      margin: { l: 40, r: 20, t: 40, b: 80 },
       xaxis: {
+        title: "World Bank regions",
+        tickangle: -75
+      },
+      yaxis: {
         title: "Gender gap",
-        range: [-10, 10]
+        range: [-10, 10],
+        zeroline: true
       }
     };
 
     Plotly.newPlot(div, [trace], layout, { displayModeBar: false });
+
+    div.on("plotly_click", e => {
+      if (!e.points || !e.points.length) return;
+
+      selectedRegion = e.points[0].customdata; // full region name
+      drawBarCharts();
+      drawLineChart();
+    });
+
   });
+
 }
 
+
+function drawLineChart() {
+  const container = document.getElementById("lineChart");
+
+  const data = genderData.filter(d =>
+    d.level === selectedLevel
+  );
+
+  const regions = [...new Set(data.map(d => d.region))];
+  const years = [...new Set(data.map(d => d.year))].sort((a, b) => a - b);
+
+  const traces = regions.map(region => {
+    const regionData = data
+      .filter(d => d.region === region)
+      .sort((a, b) => a.year - b.year);
+
+    const isSelected = selectedRegion === region;
+
+    return {
+      type: "scatter",
+      mode: "lines+markers",
+      name: REGION_LABELS[region] ?? region,
+      customdata: region,
+      x: regionData.map(d => d.year),
+      y: regionData.map(d => d.gender_gap),
+      line: {
+        width: isSelected ? 4 : 2,
+        color: isSelected
+          ? "#d62728"                     // selected region (red)
+          : selectedRegion
+          ? "#ccc"                        // others faded
+          : REGION_COLORS[region] || "#2f6df6" // default distinct color
+      },
+
+      marker: {
+        size: isSelected ? 7 : 5
+      },
+      opacity: selectedRegion && !isSelected ? 0.3 : 1
+    };
+  });
+
+  const layout = {
+    margin: { l: 50, r: 20, t: 20, b: 40 },
+    xaxis: {
+      title: "Year",
+      tickmode: "linear"
+    },
+    yaxis: {
+      title: "Gender gap",
+      range: [-10, 10],
+      zeroline: true
+    },
+    showlegend: true,
+    legend: {
+      orientation: "h",
+      y: -0.3
+    }
+  };
+
+  Plotly.newPlot(container, traces, layout, {
+    displayModeBar: false,
+    responsive: true
+  });
+
+  container.on("plotly_click", e => {
+  if (!e.points || !e.points.length) return;
+
+  selectedRegion = e.points[0].customdata;
+  drawBarCharts();
+  drawLineChart();
+});
+
+}
