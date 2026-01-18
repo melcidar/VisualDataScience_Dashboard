@@ -164,29 +164,7 @@ function drawMap(filteredData) {
 const layout = {
   geo: {
     projection: { type: "natural earth" }
-  },
-  annotations: [
-    {
-      x: 1.05,
-      y: 0.75,
-      xref: "paper",
-      yref: "paper",
-      text: "🔴 Female advantage<br>(positive values)",
-      showarrow: false,
-      align: "left",
-      font: { size: 12 }
-    },
-    {
-      x: 1.05,
-      y: 0.25,
-      xref: "paper",
-      yref: "paper",
-      text: "🔵 Male advantage<br>(negative values)",
-      showarrow: false,
-      align: "left",
-      font: { size: 12 }
-    }
-  ]
+  }
 };
 
 
