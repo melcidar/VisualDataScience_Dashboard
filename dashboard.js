@@ -38,12 +38,12 @@ const REGION_LABELS = {
 
 const REGION_COLORS = {
   "East Asia and Pacific (WB)": "#0072B2", // blue
-  "Europe and Central Asia (WB)": "#E69F00", // orange
-  "Latin America and Caribbean (WB)": "#009E73", // bluish green
+  "Europe and Central Asia (WB)": "#cc8b00", // orange
+  "Latin America and Caribbean (WB)": "#008460", // bluish green
   "Middle East and North Africa (WB)": "#CC79A7", // purple
   "North America (WB)": "#D55E00", // vermillion
   "South Asia (WB)": "#56B4E9", // sky blue
-  "Sub-Saharan Africa (WB)": "#F0E442" // yellow
+  "Sub-Saharan Africa (WB)": "#c8bf3e" // yellow
 };
 
 const MAP_COLORSCALE = [
@@ -51,6 +51,18 @@ const MAP_COLORSCALE = [
   [0.5, "#f7f7f7"],
   [1, "#053061"]
 ];
+
+const LEVEL_LABELS = {
+  "Primary": "Primary education",
+  "Lower secondary": "Lower secondary education",
+  "Upper secondary": "Upper secondary education",
+  "Tertiary": "Tertiary education"
+};
+
+
+const POSITIVE_COLOR = "#d62035"; // crvena (RdBu pozitivna strana)
+const NEGATIVE_COLOR = "#2166ac"; // plava (RdBu negativna strana)
+const FADED_COLOR = "#7c7c7c";
 
 const MAP_MIN = -10;
 const MAP_MAX = 10;
@@ -248,26 +260,22 @@ function drawBarCharts() {
     // ---------- marker logic ----------
     let marker;
 
-    if (selectedRegion) {
-      // Selected → value-based RdBu (map-consistent)
-      marker = {
-        color: values,
-        colorscale: "RdBu",
-        cmin: -10,
-        cmax: 10,
-        showscale: false,
-        opacity: regions.map(r =>
-          r === selectedRegion ? 1 : 0.25
-        )
-      };
-    } else {
-      // No selection → original categorical colors
-      marker = {
-        color: regions.map(r =>
-          REGION_COLORS[r] || "#2f6df6"
-        )
-      };
-    }
+if (selectedRegion) {
+  marker = {
+    color: regions.map((r, i) => {
+      if (r !== selectedRegion) return FADED_COLOR;
+      return values[i] >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR;
+    }),
+    opacity: regions.map(r => (r === selectedRegion ? 1 : 0.4))
+  };
+} else {
+  marker = {
+    color: regions.map(r =>
+      REGION_COLORS[r] || "#2f6df6"
+    )
+  };
+}
+
 
     const trace = {
       type: "bar",
@@ -299,12 +307,23 @@ function drawBarCharts() {
     });
 
     div.on("plotly_click", e => {
-      if (!e.points || !e.points.length) return;
+  if (!e.points || !e.points.length) return;
 
-      selectedRegion = e.points[0].customdata;
-      drawBarCharts();
-      drawLineChart();
-    });
+  selectedRegion = e.points[0].customdata;
+
+  // 🔴 KLJUČNO: ovaj bar chart = ovaj education level
+  selectedLevel = level;
+
+  // update active level button (UI sync)
+  const buttons = document.querySelectorAll("#levelButtons button");
+  buttons.forEach(b => {
+    b.classList.toggle("active", b.textContent === level);
+  });
+
+  // 🔁 refresh EVERYTHING (map + bars + line)
+  updateDashboard();
+});
+
   });
 }
 
@@ -347,22 +366,42 @@ function drawLineChart() {
   });
 
   const layout = {
-    margin: { l: 50, r: 20, t: 20, b: 40 },
-    xaxis: {
-      title: "Year",
-      tickmode: "linear"
-    },
-    yaxis: {
-      title: "Gender gap",
-      range: [-20, 35],
-      zeroline: true
-    },
-    showlegend: true,
-    legend: {
-      orientation: "h",
-      y: -0.3
+  margin: { l: 50, r: 20, t: 60, b: 40 },
+
+  xaxis: {
+    title: "Year",
+    tickmode: "linear"
+  },
+
+  yaxis: {
+    title: "Gender gap",
+    range: [-20, 35],
+    zeroline: true
+  },
+
+  showlegend: true,
+
+  legend: {
+    orientation: "h",
+    y: -0.3
+  },
+
+  annotations: [
+    {
+      text: `Education level: <b>${LEVEL_LABELS[selectedLevel] ?? selectedLevel}</b>`,
+      x: 0.5,
+      y: 1.15,
+      xref: "paper",
+      yref: "paper",
+      showarrow: false,
+      font: {
+        size: 13,
+        color: "#444"
+      }
     }
-  };
+  ]
+};
+
 
   Plotly.newPlot(container, traces, layout, {
     displayModeBar: false,
