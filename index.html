@@ -189,14 +189,15 @@
 }
 
 .header-inner {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  align-items: start;
+  display: flex;
+  justify-content: space-between;
+  align-items: space-between;
 }
 
 .header-right {
   font-size: 13px;
   color: #555;
+  padding-right: 200px;
 }
 
 .legend-inline {
@@ -210,6 +211,17 @@
   line-height: 1.4;
 }
 
+.region-subtitle {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.region-subtitle b {
+  font-weight: 600;
+  color: #444;
+}
 
   </style>
 </head>
@@ -227,6 +239,16 @@
         Gender gap is measured as the difference between female and male enrollment rates
         (percentage points).
       </p>
+      <div class="region-subtitle">
+      <strong>Region labels:</strong>
+      <span><b>EAP</b> – East Asia & Pacific</span> ·
+      <span><b>ECA</b> – Europe & Central Asia</span> ·
+      <span><b>LAC</b> – Latin America & Caribbean</span> ·
+      <span><b>MENA</b> – Middle East & North Africa</span> ·
+      <span><b>NA</b> – North America</span> ·
+      <span><b>SA</b> – South Asia</span> ·
+      <span><b>SSA</b> – Sub-Saharan Africa</span>
+      </div>
     </div>
 
     <div class="header-right">
