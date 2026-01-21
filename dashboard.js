@@ -37,13 +37,13 @@ const REGION_LABELS = {
 };
 
 const REGION_COLORS = {
-  "East Asia and Pacific (WB)": "#0072B2", // blue
-  "Europe and Central Asia (WB)": "#cc8b00", // orange
-  "Latin America and Caribbean (WB)": "#008460", // bluish green
-  "Middle East and North Africa (WB)": "#CC79A7", // purple
+  "East Asia and Pacific (WB)": "#0082ce", // blue
+  "Europe and Central Asia (WB)": "#e59c00", // orange
+  "Latin America and Caribbean (WB)": "#004e39", // bluish green
+  "Middle East and North Africa (WB)": "#6b505f", // purple
   "North America (WB)": "#D55E00", // vermillion
   "South Asia (WB)": "#56B4E9", // sky blue
-  "Sub-Saharan Africa (WB)": "#c8bf3e" // yellow
+  "Sub-Saharan Africa (WB)": "#666226" // yellow
 };
 
 const MAP_COLORSCALE = [
